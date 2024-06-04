@@ -21,3 +21,13 @@ class HeaderSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ChatSchema(BaseModel):
+    sender_name: Optional[str]
+    receiver_name: Optional[str]
+    header_id: Optional[int]
+    content: Optional[str]
+    sent_at: Optional[str]
+
+    class Config:
+        orm_mode = True

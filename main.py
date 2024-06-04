@@ -1,15 +1,17 @@
 from fastapi import FastAPI, Depends, Response, Request, WebSocket
 from fastapi.responses import FileResponse, RedirectResponse
+
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
 
-from models import Base, User
-from schema import UserSchema, FriendSchema
+from models import Base, User, Header
+from schema import UserSchema, FriendSchema, HeaderSchema, ChatSchema
 from database import SessionLocal ,engine
-from crud import db_add_user, db_add_friend, db_get_friends, db_get_room
+from crud import db_add_user, db_add_friend, db_get_friends, db_get_room, db_get_chatlist, db_add_chat
 
 app = FastAPI()
 
@@ -138,6 +140,30 @@ async def websocket_endpoint(websocket: WebSocket):
         pass
     finally:
         await wsManager.disconnect(websocket)
+
+@app.post("/makeroom")
+async def make_room(header: HeaderSchema, db: Session = Depends(get_db)):
+    db_item = Header(from_id=header.from_id,
+                    to_id=header.to_id,
+                    last_chat=header.last_chat)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    print(db_item.id)
+    return db_item.id
+
+@app.get("/chat")
+def get_chat(header_id: int,db: Session = Depends(get_db)):
+    return db_get_chatlist(db, header_id)
+
+@app.post("/chat")
+async def add_chat(chat: ChatSchema, db: Session = Depends(get_db)):
+    return db_add_chat(db, chat)
+
+@app.get("/chatlists")
+def get_chatlists(user: str, db: Session = Depends(get_db)):
+    return db.query(Header).filter(or_(Header.from_id == user, Header.to_id == user)).all()
+
 
 def run():
     import uvicorn

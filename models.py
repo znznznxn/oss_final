@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from database import Base
 
@@ -22,3 +23,16 @@ class Header(Base):
     id = Column(Integer, primary_key=True)
     from_id = Column(String, ForeignKey("users.name"))
     to_id = Column(String, ForeignKey("users.name"))
+
+class Chat(Base):
+    __tablename__ = "chats"
+
+    id = Column(Integer, primary_key=True)
+    sender_id = Column(String, ForeignKey("users.name"))
+    receiver_id = Column(String, ForeignKey("users.name"))
+    header_id = Column(Integer, ForeignKey("headers.id"))
+    content = Column(String)
+    sent_at = Column(String)
+
+    sender = relationship("User", foreign_keys=[sender_id])
+    receiver = relationship("User", foreign_keys=[receiver_id])
