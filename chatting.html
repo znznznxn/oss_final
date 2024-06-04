@@ -2,6 +2,48 @@
 <html>
     <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script>
+            var ws=new WebSocket("ws://localhost:8000/ws");
+            var url = window.location.href;
+            var friend = url.split("/")[4];
+            $("#friend_name").text(friend);
+            $(document).ready(function() {
+                ws.onmessage=function(event) {
+                    var msg = JSON.parse(event.data);
+                    var text = msg.content;
+                    var time = msg.sent_at;
+                    var msgSender = msg.sender_name;
+                    var header_id = msg.header_id;
+
+                    $.getJSON("/current_user", function(sender) {
+                        $.getJSON("/getroom", {user1: sender, user2:friend}, function(data) {
+                            console.log(header_id + "   " + data.id);
+                            if (data.id != header_id) {
+                                return;
+                            }
+                            
+                            if (msgSender != sender) {
+                                $("#chat_box").find(".chatting").append("<div><div class='receiver'>" + sender + "</div>" + "<div class='opsChat'>" + 
+                                "<div class='op chat'>" + text.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeLeft'>" + time +"</div></div></div>");
+                            }
+                            $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                        });
+                    });
+                };
+
+                $("#text_box").on("keydown", function(event) {
+                    if (event.keyCode == 13){
+                        if (!event.shiftKey){
+                            event.preventDefault();
+                            sendClick();
+                        }
+                        else {
+                            $("#text_box").html($("#text_box").html() + "<br>");
+                        }
+                    }
+                });
+            });
+        </script>
         <style>
             * {
                 font-family: Arial, Helvetica, sans-serif;

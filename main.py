@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Response, Request
+from fastapi import FastAPI, Depends, Response, Request, WebSocket
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -105,6 +105,35 @@ def add_friend(friend:FriendSchema, db: Session = Depends(get_db)):
 @app.get("/chatting/{friend}")
 def chat_start(friend: str, db: Session = Depends(get_db)):
     return FileResponse("chatting.html")
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections=[]
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    async def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+wsManager = ConnectionManager()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await wsManager.connect(websocket)
+    try:
+        while True:
+            data =await websocket.receive_text()
+            await wsManager.broadcast(f"{data}")
+    except Exception as e:
+        pass
+    finally:
+        await wsManager.disconnect(websocket)
 
 def run():
     import uvicorn
