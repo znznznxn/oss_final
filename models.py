@@ -23,6 +23,7 @@ class Header(Base):
     id = Column(Integer, primary_key=True)
     from_id = Column(String, ForeignKey("users.name"))
     to_id = Column(String, ForeignKey("users.name"))
+    last_chat = Column(String)
 
 class Chat(Base):
     __tablename__ = "chats"

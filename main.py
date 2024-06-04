@@ -152,6 +152,14 @@ async def make_room(header: HeaderSchema, db: Session = Depends(get_db)):
     print(db_item.id)
     return db_item.id
 
+@app.post("/updatelastchat")
+def update_room(header: LastchatSchema, db: Session = Depends(get_db)):
+    db_item = db.query(Header).filter(Header.id == header.header_id).first()
+    db_item.last_chat = header.last_chat
+    db.commit()
+    db.refresh(db_item)
+    return True
+
 @app.get("/chat")
 def get_chat(header_id: int,db: Session = Depends(get_db)):
     return db_get_chatlist(db, header_id)

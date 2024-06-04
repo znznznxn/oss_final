@@ -6,21 +6,29 @@ class UserSchema(BaseModel):
     password: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class FriendSchema(BaseModel):
     user1: Optional[str]
     user2: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class LastchatSchema(BaseModel):
+    header_id: Optional[int]
+    last_chat: Optional[str]
+
+    class Config:
+        from_attributes = True
 
 class HeaderSchema(BaseModel):
     from_id: Optional[str]
     to_id: Optional[str]
+    last_chat: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ChatSchema(BaseModel):
     sender_name: Optional[str]
@@ -30,4 +38,4 @@ class ChatSchema(BaseModel):
     sent_at: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
