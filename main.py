@@ -9,7 +9,7 @@ from fastapi_login.exceptions import InvalidCredentialsException
 from models import Base, User
 from schema import UserSchema, FriendSchema
 from database import SessionLocal ,engine
-from crud import db_add_user, db_add_friend, db_get_friends
+from crud import db_add_user, db_add_friend, db_get_friends, db_get_room
 
 app = FastAPI()
 
@@ -105,6 +105,10 @@ def add_friend(friend:FriendSchema, db: Session = Depends(get_db)):
 @app.get("/chatting/{friend}")
 def chat_start(friend: str, db: Session = Depends(get_db)):
     return FileResponse("chatting.html")
+
+@app.get("/getroom")
+def get_room(user1:str, user2:str, db: Session = Depends(get_db)):
+    return db_get_room(db, user1, user2)
 
 class ConnectionManager:
     def __init__(self):

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 
-from models import User, Friends
+from models import User, Friends, Header
 from schemas import UserSchema, FriendSchema
 
 def db_add_user(db: Session, user: UserSchema):
@@ -22,3 +22,6 @@ def db_add_friend(db: Session, user1: str, user2: str):
 
 def db_get_friends(db: Session, user: str):
     return db.query(Friends).filter(or_(Friends.user1_id == user,Friends.user2_id == user)).all()
+
+def db_get_room(db: Session, user1: str, user2: str):
+    return db.query(Header).filter(or_(and_(Header.from_id == user1,Header.to_id == user2), and_(Header.from_id == user2, Header.to_id==user1))).first()

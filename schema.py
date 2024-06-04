@@ -14,3 +14,10 @@ class FriendSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+class HeaderSchema(BaseModel):
+    from_id: Optional[str]
+    to_id: Optional[str]
+
+    class Config:
+        orm_mode = True
