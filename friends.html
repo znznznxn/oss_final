@@ -70,6 +70,33 @@
                 overflow: auto;
             }
 
+            #menu {
+                display:flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+                width: 370px;
+                height: 58px;
+                border-bottom-left-radius: 5px;
+                border-bottom-right-radius: 5px;
+                margin-left: 0;
+                background-color: rgb(232, 232, 232);
+            }
+
+            #menu input[type=button] {
+                width: 80px;
+                height: 30px;
+                border: 1px solid rgb(209, 209, 209);
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 15px;
+                background-color: rgb(209, 209, 209);
+                margin-top:15px;
+            }
+
+            #menu input[type=button]:hover {
+                background-color: rgb(202, 200, 200);
+            }
+
             .modal {
                 position: absolute;
                 display: none;
@@ -121,6 +148,11 @@
             <div id="list_area">
                 <ul id="friends-list">
                 </ul>
+            </div>
+            <div id="menu">
+                <a href="/friends"><input type="button" id="friends" value="친구"></a>
+                <a href="/chatlist"><input type="button" id="chatting" value="채팅"></a>
+                <a href="/logout"><input type="button" id="logout" value="로그아웃"></a>
             </div>
         </div>
     </body>
