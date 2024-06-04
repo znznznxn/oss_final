@@ -49,114 +49,32 @@
                         }
                     }
                 });
-                function sendClick(event) {
-                    var date = new Date();
-                    var time;
-                    var am_pm = date.getHours() >= 12 ? "오후" : "오전";
-                    var hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
-                    var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
-                    time = am_pm + " " + hours + ":" + minutes;
-
-                    var text = $("#text_box").val();
-
-                    if (text == "") {
-                        return;
-                    }
-                    
-                    $.getJSON("/current_user", function(sender) {
-                        $.getJSON("/getroom", {user1: sender, user2:friend}, function(data) {
-                            var msg = {
-                                sender_name : sender,
-                                receiver_name : friend,
-                                group_id : null,
-                                header_id : null,
-                                content : text,
-                                sent_at : time
-                            };
-
-                            if (data) {
-                                msg.header_id = data.id;
-                        
-                                $.ajax({
-                                    url: "/chat",
-                                    type: "post",
-                                    data: JSON.stringify(msg),
-                                    contentType: "application/json",
-                                    success: function (data) {
-                                        console.log(data);
-                                        console.log(JSON.stringify(msg));
-                                    },
-                                    error: function (request, error) {
-                                        console.log(JSON.stringify(error));
-                                    },
-                                });
-                                
-                                ws.send(JSON.stringify(msg));
-                            }
-                            else {
-                                $.ajax({
-                                    url: "/makeroom",
-                                    data: JSON.stringify({"from_id": sender, "to_id": friend, "to_group": null, "last_chat": text}),
-                                    contentType: "application/json",
-                                    type: "post",
-                                    success: function (data) {
-                                        console.log(data);
-                                        msg.header_id = data;
-                        
-                                        $.ajax({
-                                            url: "/chat",
-                                            type: "post",
-                                            data: JSON.stringify(msg),
-                                            contentType: "application/json",
-                                            success: function (data) {
-                                                console.log(data);
-                                                console.log(JSON.stringify(msg));
-                                            },
-                                            error: function (request, error) {
-                                                console.log(JSON.stringify(error));
-                                            },
-                                        });
-                                        
-                                        ws.send(JSON.stringify(msg));
-                                    }
-                                })
-                            }
-                        
-                            $("#chat_box").find(".chatting").append("<div class='myChat'>" +
-                            "<div class='me chat'>" + text.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
-                        
-                            $("#text_box").val("");
-                            $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
-                            $("#text_box").focus();
-                        });
-                    })
-                }
-                function get_all_chats(chats) {
-                    $("#chat_box").find(".chatting").empty();
-                    
-                    $.getJSON("/current_user", function(data) {
-                        var current_user = data;
-                        chats.forEach(item => {
-                            var sender = item.sender_id;
-                            var text = item.content;
-                            var time = item.sent_at;
-
-                            if (sender == current_user) {
-                                $("#chat_box").find(".chatting").append("<div class='myChat'>" +
-                                "<div class='me chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
-                            }
-                            else {
-                                $("#chat_box").find(".chatting").append("<div><div class='receiver'>" + sender + "</div>" + "<div class='opsChat'>" + 
-                                "<div class='op chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeLeft'>" + time +"</div></div></div>");
-                            }
-                        });
-                        $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
-                    });
-                }
-                function get_chats(data) {
-                    $.getJSON("/chat", data, get_all_chats);
-                }
             });
+            function get_all_chats(chats) {
+                $("#chat_box").find(".chatting").empty();
+                
+                $.getJSON("/current_user", function(data) {
+                    var current_user = data;
+                    chats.forEach(item => {
+                        var sender = item.sender_id;
+                        var text = item.content;
+                        var time = item.sent_at;
+
+                        if (sender == current_user) {
+                            $("#chat_box").find(".chatting").append("<div class='myChat'>" +
+                            "<div class='me chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
+                        }
+                        else {
+                            $("#chat_box").find(".chatting").append("<div><div class='receiver'>" + sender + "</div>" + "<div class='opsChat'>" + 
+                            "<div class='op chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeLeft'>" + time +"</div></div></div>");
+                        }
+                    });
+                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                });
+            }
+            function get_chats(data) {
+                $.getJSON("/chat", data, get_all_chats);
+            }
         </script>
         <style>
             * {
@@ -333,5 +251,89 @@
             </div>
         </div>
         <button id="btn_send" onclick="sendClick();" class="btn_send">Send</button>
+        <script>
+            function sendClick(event) {
+                var date = new Date();
+                var time;
+                var am_pm = date.getHours() >= 12 ? "오후" : "오전";
+                var hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+                var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
+                time = am_pm + " " + hours + ":" + minutes;
+
+                var text = $("#text_box").val();
+
+                if (text == "") {
+                    return;
+                }
+                
+                $.getJSON("/current_user", function(sender) {
+                    $.getJSON("/getroom", {user1: sender, user2:friend}, function(data) {
+                        var msg = {
+                            sender_name : sender,
+                            receiver_name : friend,
+                            group_id : null,
+                            header_id : null,
+                            content : text,
+                            sent_at : time
+                        };
+
+                        if (data) {
+                            msg.header_id = data.id;
+                    
+                            $.ajax({
+                                url: "/chat",
+                                type: "post",
+                                data: JSON.stringify(msg),
+                                contentType: "application/json",
+                                success: function (data) {
+                                    console.log(data);
+                                    console.log(JSON.stringify(msg));
+                                },
+                                error: function (request, error) {
+                                    console.log(JSON.stringify(error));
+                                },
+                            });
+                            
+                            ws.send(JSON.stringify(msg));
+                        }
+                        else {
+                            $.ajax({
+                                url: "/makeroom",
+                                data: JSON.stringify({"from_id": sender, "to_id": friend, "to_group": null, "last_chat": text}),
+                                contentType: "application/json",
+                                type: "post",
+                                success: function (data) {
+                                    console.log(data);
+                                    msg.header_id = data;
+                    
+                                    $.ajax({
+                                        url: "/chat",
+                                        type: "post",
+                                        data: JSON.stringify(msg),
+                                        contentType: "application/json",
+                                        success: function (data) {
+                                            console.log(data);
+                                            console.log(JSON.stringify(msg));
+                                        },
+                                        error: function (request, error) {
+                                            console.log(JSON.stringify(error));
+                                        },
+                                    });
+                                    
+                                    ws.send(JSON.stringify(msg));
+                                }
+                            })
+                        }
+                    
+                        $("#chat_box").find(".chatting").append("<div class='myChat'>" +
+                        "<div class='me chat'>" + text.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
+                    
+                        $("#text_box").val("");
+                        $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                        $("#text_box").focus();
+                    });
+                })
+            }
+        </script>
     </body>
 </html>
