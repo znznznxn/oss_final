@@ -51,6 +51,8 @@
                     "password": user_pw
                 };
 
+                var users = [];
+
                 $.getJSON("/users", function(user, txtStatus, xhr) {
                     for(var i = 0; i < user.length; i++) {
                         users.push(user[i].name);
@@ -155,7 +157,7 @@
     <body>
         <div id ="content">
             <div id="logo">
-                <h1>Talk</h1>
+                <h1>KaKao Talk</h1>
             </div>
             <div id="loginForm">
                 <input type="text" id="user_name" name="user_name" placeholder="ID">
