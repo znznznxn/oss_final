@@ -7,9 +7,9 @@ from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
 
 from models import Base, User
-from schema import UserSchema
+from schema import UserSchema, FriendSchema
 from database import SessionLocal ,engine
-from crud import db_add_user
+from crud import db_add_user, db_add_friend, db_get_friends
 
 app = FastAPI()
 
@@ -85,6 +85,23 @@ def logout(response: Response):
 @app.post("/register")
 def register(user: UserSchema, db: Session = Depends(get_db)):
     return db_add_user(db, user)
+
+@app.get("/users")
+def get_users(db: Session = Depends(get_db)):
+    return db.query(User).all()
+
+@app.get("/current_user")
+def get_current_user(user=Depends(manager)):
+    return user.name
+
+@app.get("/getfriends")
+def get_friends(user: str, db: Session = Depends(get_db)):
+    return db_get_friends(db, user)
+
+@app.post("/addfriend")
+def add_friend(friend:FriendSchema, db: Session = Depends(get_db)):
+    return db_add_friend(db, friend.user1, friend.user2)
+
 
 def run():
     import uvicorn
