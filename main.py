@@ -102,6 +102,9 @@ def get_friends(user: str, db: Session = Depends(get_db)):
 def add_friend(friend:FriendSchema, db: Session = Depends(get_db)):
     return db_add_friend(db, friend.user1, friend.user2)
 
+@app.get("/chatting/{friend}")
+def chat_start(friend: str, db: Session = Depends(get_db)):
+    return FileResponse("chatting.html")
 
 def run():
     import uvicorn

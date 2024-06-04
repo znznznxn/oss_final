@@ -88,6 +88,18 @@
                     })
                 });
             });
+            function chatStart() {
+                var friend_id = event.target.innerText;
+                $.get("/current_user", function(user, txtStatus, xhr) {
+                    $.ajax({
+                        url: "/chatting/"+friend_id,
+                        type: "get",
+                        success: function (data, txtStatus, xhr) {
+                            window.location = "/chatting/"+friend_id;
+                        }
+                    })
+                });
+            }
         </script>
         <style>
             * {
