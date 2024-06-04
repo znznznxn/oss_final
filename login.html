@@ -1,6 +1,50 @@
 <html>
     <head>
         <title>login</title>
+        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $("#btn_login").click(function() {
+                    login();
+                });
+                $("#btn_register").click(function() {
+                    register();
+                });
+            });
+            function login() {
+                var user_name = $("#user_name").val();
+                var user_pw = $("#user_pw").val();
+
+                if (user_name == "" || user_pw == "") {
+                    alert("아이디와 비밀번호를 입력해주세요.");
+                    return;
+                }
+
+                var data = {
+                    "username": user_name,
+                    "password": user_pw
+                };
+
+                // ajax 통신 필요
+            }
+            function register() {
+                var user_name = $("#user_name").val();
+                var user_pw = $("#user_pw").val();
+
+                if (user_name == "" || user_pw == "") {
+                    alert("아이디와 비밀번호를 입력해주세요.");
+                    return;
+                }
+
+                var data = {
+                    "username": user_name,
+                    "password": user_pw
+                };
+
+                // ajax 통신 필요
+            }
+        </script>
     </head>
     <body>
         <div id ="content">
