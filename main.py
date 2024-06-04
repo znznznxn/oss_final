@@ -9,7 +9,7 @@ from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
 
 from models import Base, User, Header
-from schema import UserSchema, FriendSchema, HeaderSchema, ChatSchema
+from schema import UserSchema, FriendSchema, HeaderSchema, ChatSchema, LastchatSchema
 from database import SessionLocal ,engine
 from crud import db_add_user, db_add_friend, db_get_friends, db_get_room, db_get_chatlist, db_add_chat
 
@@ -24,12 +24,12 @@ def get_db():
     finally:
         db.close()
 
-class NotAuthneticatedException(Exception):
+class NotAuthenticatedException(Exception):
     pass
 
 SECRET = "oss"
 
-manager = LoginManager(SECRET, '/login', use_cookie=True, custom_exception=NotAuthneticatedException)
+manager = LoginManager(SECRET, '/login', use_cookie=True, not_authenticated_exception=NotAuthenticatedException)
 
 # 사용자 인증 및 access_token 부여
 @app.post('/token')
@@ -49,11 +49,11 @@ def login(response: Response, data: OAuth2PasswordRequestForm = Depends()):
     return {'access_token': access_token}
 
 # 사용자 인증 확인
-@app.exception_handler(NotAuthneticatedException)
-def auth_exception_handler(request: Request, exc: NotAuthneticatedException):
+@app.exception_handler(NotAuthenticatedException)
+def auth_exception_handler(request: Request, exc: NotAuthenticatedException):
     return RedirectResponse('/login')
 
-@manager.user_loader
+@manager.user_loader()
 def get_user(username: str, db: Session = None):
     if not db:
         with SessionLocal() as db:
@@ -167,7 +167,7 @@ def get_chatlists(user: str, db: Session = Depends(get_db)):
 
 def run():
     import uvicorn
-    uvicorn.run(app)
+    uvicorn.run(app, host='0.0.0.0')
 
 if __name__ == "__main__":
     run()
