@@ -66,7 +66,11 @@ def get_root():
     return RedirectResponse(url='/friends')
 
 @app.get("/friends")
-def get_friends(user=Depends(manager)):
+def get_friends(user=Depends(manager), db: Session = Depends(get_db)):
+    if db.query(User).filter(User.name == user.name).first() is None:
+        response = RedirectResponse("/login", status_code = 302)
+        response.delete_cookie(key = "access-token")
+        return response
     return FileResponse("friends.html")
 
 @app.get("/login")
