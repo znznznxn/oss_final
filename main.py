@@ -13,6 +13,7 @@ from schema import UserSchema, FriendSchema, HeaderSchema, ChatSchema, LastchatS
 from database import SessionLocal ,engine
 from crud import db_add_user, db_add_friend, db_get_friends, db_get_room, db_get_chatlist, db_add_chat
 
+#O
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
@@ -26,12 +27,11 @@ def get_db():
 
 class NotAuthenticatedException(Exception):
     pass
-
+# O , 여기 옵션 잘못 설정되어 있어서 수정함
 SECRET = "oss"
+manager = LoginManager(SECRET, '/login', use_cookie=True, custom_exception=NotAuthenticatedException)
 
-manager = LoginManager(SECRET, '/login', use_cookie=True, not_authenticated_exception=NotAuthenticatedException)
-
-# 사용자 인증 및 access_token 부여
+# O
 @app.post('/token')
 def login(response: Response, data: OAuth2PasswordRequestForm = Depends()):
     username = data.username
@@ -48,11 +48,11 @@ def login(response: Response, data: OAuth2PasswordRequestForm = Depends()):
     manager.set_cookie(response, access_token)
     return {'access_token': access_token}
 
-# 사용자 인증 확인
+# O
 @app.exception_handler(NotAuthenticatedException)
 def auth_exception_handler(request: Request, exc: NotAuthenticatedException):
     return RedirectResponse('/login')
-
+# O
 @manager.user_loader()
 def get_user(username: str, db: Session = None):
     if not db:
@@ -60,11 +60,11 @@ def get_user(username: str, db: Session = None):
             return db.query(User).filter(User.name == username).first()
     return db.query(User).filter(User.name == username).first()
 
-# 로그인 상태 시 친구 목록 창으로 redirect
+# O
 @app.get("/")
 def get_root():
     return RedirectResponse(url='/friends')
-
+# O, 유저가 이상하면 로그인 페이지로, 유저가 일치하면 friend list화면으로
 @app.get("/friends")
 def get_friends(user=Depends(manager), db: Session = Depends(get_db)):
     if db.query(User).filter(User.name == user.name).first() is None:
@@ -77,17 +77,22 @@ def get_friends(user=Depends(manager), db: Session = Depends(get_db)):
 def get_login():
     return FileResponse("login.html")
 
+#추가 구현 로그아웃페이지
+@app.get("/register")
+def get_register():
+    return FileResponse("register.html")
+
 # 채팅방 목록으로 이동
 @app.get("/chatlist")
 def get_chatlist():
     return FileResponse("chatlist.html")
-
+# O
 @app.get("/logout")
 def logout(response: Response):
     response = RedirectResponse("/login", status_code = 302)
     response.delete_cookie(key = "access-token")
     return response
-
+# O
 @app.post("/register")
 def register(user: UserSchema, db: Session = Depends(get_db)):
     return db_add_user(db, user)
@@ -99,11 +104,11 @@ def get_users(db: Session = Depends(get_db)):
 @app.get("/current_user")
 def get_current_user(user=Depends(manager)):
     return user.name
-
+# O
 @app.get("/getfriends")
 def get_friends(user: str, db: Session = Depends(get_db)):
     return db_get_friends(db, user)
-
+# O
 @app.post("/addfriend")
 def add_friend(friend:FriendSchema, db: Session = Depends(get_db)):
     return db_add_friend(db, friend.user1, friend.user2)
@@ -116,6 +121,7 @@ def chat_start(friend: str, db: Session = Depends(get_db)):
 def get_room(user1:str, user2:str, db: Session = Depends(get_db)):
     return db_get_room(db, user1, user2)
 
+# O
 class ConnectionManager:
     def __init__(self):
         self.active_connections=[]
@@ -131,6 +137,7 @@ class ConnectionManager:
         for connection in self.active_connections:
             await connection.send_text(message)
 
+# O,웹소캣 기능
 wsManager = ConnectionManager()
 
 @app.websocket("/ws")
@@ -155,7 +162,7 @@ async def make_room(header: HeaderSchema, db: Session = Depends(get_db)):
     db.refresh(db_item)
     print(db_item.id)
     return db_item.id
-
+# O
 @app.post("/updatelastchat")
 def update_room(header: LastchatSchema, db: Session = Depends(get_db)):
     db_item = db.query(Header).filter(Header.id == header.header_id).first()
@@ -176,7 +183,7 @@ async def add_chat(chat: ChatSchema, db: Session = Depends(get_db)):
 def get_chatlists(user: str, db: Session = Depends(get_db)):
     return db.query(Header).filter(or_(Header.from_id == user, Header.to_id == user)).all()
 
-
+# O
 def run():
     import uvicorn
     uvicorn.run(app, host='0.0.0.0')
