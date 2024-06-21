@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html>
     <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
         <script>
             var ws=new WebSocket("ws://localhost:8000/ws");
+            var constantMap = new Map();
+            var result; 
             var url = window.location.href;
             var friend = url.split("/")[4];
             $("#friend_name").text(friend);
@@ -28,10 +30,121 @@
                             if (data.id != header_id) {
                                 return;
                             }
-                            
-                            if (msgSender != sender) {
-                                $("#chat_box").find(".chatting").append("<div><div class='receiver'>" + sender + "</div>" + "<div class='opsChat'>" + 
-                                "<div class='op chat'>" + text.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeLeft'>" + time +"</div></div></div>");
+                            if(text.startsWith('data:image/')){
+                                if(msgSender != sender){
+                                    const content = $("<div class='opsChat'>" +
+                                    "<div class='op chat'><img src='" + text + "' style='width:100%; height:100%;'></div>" +
+                                    "< class='timeLeft'>" + time + "</div></div>");
+                                    const responseButton = $("<button class='responseBtn'>답장</button>");
+                                    responseButton.on('click', function() {
+                                        var contentDiv = $(this).closest('.opsChat')[0];
+                                        result = constantMap.get(contentDiv);
+                                        console.log(result);
+                                    });
+                                    content.append(responseButton);
+                                    $("#chat_box").find(".chatting").append(content);
+                                    constantMap.set(content.find('.opsChat')[0],mgs.id);
+                                    $('.op.chat img').on('click', function(event) {
+                                        const modal = $('#modal');
+                                        const modalImage = $('#modalImage');
+                                        const clickedElement = event.target;
+                                        modalImage.attr('src', clickedElement.src);
+                                        modal.show();
+                                    });
+                                }
+                            }
+                            else{ //상대가 보내온걸 받는 장소
+                                if (msgSender != sender) {
+                                    if(msg.response_id !== null){
+                                        var text1;
+                                        $.getJSON("/idchatlist?id="+msg.response_id,function(chat1){
+                                            chat1.forEach(item1=>{
+                                                if(item1.sender_id == sender){
+                                                    text1="나에게 답장<br>"
+                                                }
+                                                else{
+                                                    text1=item1.sender_id+"에게 답장<br>"
+                                                }
+
+                                                if(item1.content.startsWith('data:image/')){
+                                                    text1+="사진";
+                                                    text1+="<hr>";
+                                                    text1+=mgs.content;
+                                                    text=text1;
+                                                    replacetext= text.replaceAll('\n','<br>');
+                                                    replacetext=replacetext.replaceAll(' ','&nbsp;');
+                                                    if(mgs.content.startsWith('data:image/')){
+                                                    //답장 o + 답장전 사진 + 답장 후 사진 + 내,너가 보내는 문자 => 불가능
+                                                    }
+                                                    else{
+                                                        var newMessage = $("<div class='opsChat'>" +
+                                                        "<div class='response chat'>" + replacetext + "</div><div class='timeLeft'>" + time + "</div></div>");
+                                                        const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                        responseButton.on('click', function() {
+                                                            var contentDiv = $(this).closest('.opsChat')[0];
+                                                            result = constantMap.get(contentDiv);
+                                                            console.log(result);
+                                                        });
+                                                        newMessage.append(responseButton);
+                                                        newMessage.find('.response.chat').on('click', function(event) {
+                                                            var foundKey = findKeyByValue(constantMap, data.response_id);
+                                                            if (foundKey) {
+                                                                var relativeTop = foundKey.offsetTop;
+                                                                $("#chat_box").scrollTop(relativeTop - 100);
+                                                            }
+                                                        });
+                                                        $("#chat_box").find(".chatting").append(newMessage);
+                                                        constantMap.set(newMessage.find('.opsChat')[0],msg.id);      
+                                                    }
+                                                }
+                                                else{
+                                                    text1+=item1.content;
+                                                    text1+="<hr>";
+                                                    text1+=msg.content;
+                                                    text=text1;
+                                                    replacetext= text.replaceAll('\n','<br>');
+                                                    replacetext=replacetext.replaceAll(' ','&nbsp;');
+                                                    if(item.content.startsWith('data:image/')){
+                                                    //답장 o + 답장전 사진 + 답장 후 사진 + 내,너가 보내는 문자 => 불가능
+                                                    }
+                                                    else{
+                                                        var newMessage = $("<div class='opsChat'>" +
+                                                        "<div class='response chat'>" + replacetext + "</div><div class='timeLeft'>" + time + "</div></div>");
+                                                        const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                        responseButton.on('click', function() {
+                                                            var contentDiv = $(this).closest('.opsChat')[0];
+                                                            result = constantMap.get(contentDiv);
+                                                            console.log(result);
+                                                        });
+                                                        newMessage.append(responseButton);
+                                                        newMessage.find('.response.chat').on('click', function(event) {
+                                                            var foundKey = findKeyByValue(constantMap, data.response_id);
+                                                            if (foundKey) {
+                                                                var relativeTop = foundKey.offsetTop;
+                                                                $("#chat_box").scrollTop(relativeTop - 100);
+                                                            }
+                                                        });
+                                                        $("#chat_box").find(".chatting").append(newMessage);
+                                                        constantMap.set(newMessage.find('.opsChat')[0],msg.id);      
+                                                    }
+                                                }
+                                            })
+                                        })                                  
+                                    }
+                                    else{
+                                        const content=$("<div><div class='receiver'>" + sender + "</div>" + "<div class='opsChat'>" + 
+                                        "<div class='op chat'>" + text.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeLeft'>" + time +"</div></div></div>");
+                                        const responseButton = $("<button class='responseBtn'>답장</button>");
+                                        responseButton.on('click', function() {
+                                            var contentDiv = $(this).closest('.opsChat')[0];
+                                            result = constantMap.get(contentDiv);
+                                            console.log(result);
+                                        });
+                                        content.append(responseButton);
+                                        $("#chat_box").find(".chatting").append(content);
+                                        constantMap.set(content.find('.opsChat')[0],data.id);
+                                    }
+                                }
                             }
                             $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
                         });
@@ -49,6 +162,22 @@
                         }
                     }
                 });
+                $("#imageupload").on("change",function(event){
+                    previewImage(event);
+                });
+
+                $("#modal").on("click", function() {
+                    $(this).hide();
+                });
+                function findKeyByValue(map, targetValue) {
+                    for (let [key, value] of map.entries()) {
+                    if (value === targetValue) {
+                        return key;
+                    }
+                    }
+                    return null; // 찾지 못한 경우
+                }
+
             });
             function get_all_chats(chats) {
                 $("#chat_box").find(".chatting").empty();
@@ -58,22 +187,344 @@
                     chats.forEach(item => {
                         var sender = item.sender_id;
                         var text = item.content;
+                        var text1;
                         var time = item.sent_at;
-
-                        if (sender == current_user) {
-                            $("#chat_box").find(".chatting").append("<div class='myChat'>" +
-                            "<div class='me chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
+                        var myid = item.id;
+                        if(item.response_id !== null){
+                            $.getJSON("/idchatlist?id="+item.response_id,function(chat1){
+                                chat1.forEach(item1=>{ 
+                                    if(item1.sender_id == current_user){
+                                        text1="나에게 답장<br>"
+                                    }
+                                    else{
+                                        text1=item1.sender_id+"에게 답장<br>"
+                                    }
+                                    if(item1.content.startsWith('data:image/')){
+                                        text1+="사진";
+                                        text1+="<hr>";
+                                        text1+=item.content;
+                                        text=text1;
+                                        replacetext= text.replaceAll('\n','<br>');
+                                        replacetext=replacetext.replaceAll(' ','&nbsp;');
+                                        if(item.content.startsWith('data:image/')){
+                                            //답장 o + 답장전 사진 + 답장 후 사진 + 내,너가 보내는 문자 => 불가능
+                                        }
+                                        else{
+                                            //답장 o + 답장전 사진 + 답장 후 텍스트 + 내가 보내는 문자
+                                            if(sender == current_user){
+                                                const newMessage = $("<div class='myChat'>" + "<div class='me Chat'>" +
+                                                "<div class='response chat'>" + replacetext + "</div></div><div class='timeRight'>" + time + "</div></div>");
+                                                const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                responseButton.on('click', function() {
+                                                    var contentDiv = $(this).closest('.myChat')[0];
+                                                    result = constantMap.get(contentDiv);
+                                                    console.log(result);
+                                                });
+                                                newMessage.append(responseButton);
+                                                // 클릭 이벤트 핸들러 추가
+                                                newMessage.find('.response.chat').on('click', function(event) {
+                                                    var foundKey = findKeyByValue(constantMap, item.response_id);
+                                                    if (foundKey) {
+                                                        var relativeTop = foundKey.offsetTop;
+                                                        $("#chat_box").scrollTop(relativeTop - 100);
+                                                    }
+                                                });
+                                                // 채팅 창에 메시지 추가
+                                                $("#chat_box").find(".chatting").append(newMessage);
+                                                constantMap.set(newMessage[0],myid);
+                                                $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                            }
+                                            //답장 o + 답장전 사진 + 답장 후 텍스트 + 상대방이 보내는 문자
+                                            else{
+                                                const newMessage = $("<div class='opsChat'>" + "<div class='op Chat'>"+
+                                                "<div class='response chat'>" + replacetext + "</div></div><div class='timeLeft'>" + time + "</div></div>");
+                                                const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                responseButton.on('click', function() {
+                                                    var contentDiv = $(this).closest('.opsChat')[0];
+                                                    result = constantMap.get(contentDiv);
+                                                    console.log(result);
+                                                });
+                                                newMessage.append(responseButton);
+                                                newMessage.find('.response.chat').on('click', function(event) {
+                                                    var foundKey = findKeyByValue(constantMap, item.response_id);
+                                                    if (foundKey) {
+                                                        var relativeTop = foundKey.offsetTop;
+                                                        $("#chat_box").scrollTop(relativeTop - 100);
+                                                    }
+                                                });
+                                                $("#chat_box").find(".chatting").append(newMessage);
+                                                constantMap.set(newMessage.find('.opsChat')[0],myid);
+                                                $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                            }
+                                        }
+                                    }
+                                    else{
+                                        text1+=item1.content;
+                                        text1+="<hr>";
+                                        text1+=item.content;
+                                        text=text1;
+                                        replacetext= text.replaceAll('\n','<br>');
+                                        replacetext=replacetext.replaceAll(' ','&nbsp;');
+                                        if(item.content.startsWith('data:image/')){
+                                            //답장 o + 답장전 텍스트 + 답장 후 사진 + 내,너가 보내는 문자 => 불가능
+                                        }
+                                        else{
+                                            //답장 o + 답장전 텍스트 + 답장 후 텍스트 + 내가 보내는 문자
+                                            if(sender == current_user){
+                                                const newMessage = $("<div class='myChat'>" +"<div class='me Chat'>"+
+                                                "<div class='response chat'>" + replacetext + "</div></div><div class='timeRight'>" + time + "</div></div>");
+                                                const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                responseButton.on('click', function() {
+                                                    var contentDiv = $(this).closest('.myChat')[0];
+                                                    result = constantMap.get(contentDiv);
+                                                    console.log(result);
+                                                });
+                                                newMessage.append(responseButton);
+                                                // 클릭 이벤트 핸들러 추가
+                                                newMessage.find('.response.chat').on('click', function(event) {
+                                                    var foundKey = findKeyByValue(constantMap, item.response_id);
+                                                    if (foundKey) {
+                                                        var relativeTop = foundKey.offsetTop;
+                                                        $("#chat_box").scrollTop(relativeTop - 100);
+                                                    }
+                                                });
+                                                // 채팅 창에 메시지 추가
+                                                $("#chat_box").find(".chatting").append(newMessage);
+                                                constantMap.set(newMessage[0],myid);
+                                                $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                            }
+                                            //답장 o + 답장전 텍스트 + 답장 후 텍스트 + 상대방이 보내는 문자
+                                            else{
+                                                const newMessage = $("<div class='opsChat'>" +"<div class='op Chat'>"+
+                                                "<div class='response chat'>" + replacetext + "</div></div><div class='timeLeft'>" + time + "</div></div>");
+                                                const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                responseButton.on('click', function() {
+                                                    var contentDiv = $(this).closest('.opsChat')[0];
+                                                    result = constantMap.get(contentDiv);
+                                                    console.log(result);
+                                                });
+                                                newMessage.append(responseButton);
+                                                newMessage.find('.response.chat').on('click', function(event) {
+                                                    var foundKey = findKeyByValue(constantMap, item.response_id);
+                                                    if (foundKey) {
+                                                        var relativeTop = foundKey.offsetTop;
+                                                        $("#chat_box").scrollTop(relativeTop - 100);
+                                                    }
+                                                });
+                                                $("#chat_box").find(".chatting").append(newMessage);
+                                                constantMap.set(newMessage.find('.opsChat')[0],myid);
+                                                $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                            }
+                                        }        
+                                    }
+                                })
+                            })
                         }
-                        else {
-                            $("#chat_box").find(".chatting").append("<div><div class='receiver'>" + sender + "</div>" + "<div class='opsChat'>" + 
-                            "<div class='op chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeLeft'>" + time +"</div></div></div>");
+                        else{
+                            if(text.startsWith('data:image/')){
+                                if(sender == current_user){
+                                    const content = $("<div class='myChat'>" +
+                                    "<div class='me chat'><img src='" + text + "' style='width:100%; height:100%;'></div>" +
+                                    "<div class='timeRight'>" + time + "</div>" +
+                                    "</div>");
+                                    const responseButton = $("<button class='responseBtn'>답장</button>");
+                                    responseButton.on('click', function() {
+                                        var contentDiv = $(this).closest('myChat')[0];
+                                        result = constantMap.get(contentDiv);
+                                        console.log(result);
+                                    });
+                                    content.append(responseButton);
+                                    $("#chat_box").find(".chatting").append(content);
+                                    constantMap.set(content[0],myid);
+                                    $('.me.chat img').on('click', function(event) {
+                                        const modal = $('#modal');
+                                        const modalImage = $('#modalImage');
+                                        const clickedElement = event.target;
+                                        modalImage.attr('src', clickedElement.src);
+                                        modal.show();
+                                    });
+                                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                }
+                                else{
+                                    const content = $("<div class='opsChat'>" + "<div class='op chat'><img src='" + text + "' style='width:100%; height:100%;'></div>" +
+                                    "<div class='timeLeft'>" + time + "</div></div>");
+                                    const responseButton = $("<button class='responseBtn'>답장</button>");
+                                    responseButton.on('click', function() {
+                                        var contentDiv = $(this).closest('.opsChat')[0];
+                                        result = constantMap.get(contentDiv);
+                                        console.log(result);
+                                    });
+                                    content.append(responseButton);
+                                    $("#chat_box").find(".chatting").append(content);
+                                    constantMap.set(content.find('opsChat')[0],myid);
+                                    $('.op.chat img').on('click', function(event) {
+                                        const modal = $('#modal');
+                                        const modalImage = $('#modalImage');
+                                        const clickedElement = event.target;
+                                        modalImage.attr('src', clickedElement.src);
+                                        modal.show();
+                                    });
+                                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                }
+                            }
+                            else{
+                                if (sender == current_user) {
+                                    const content =$("<div class='myChat'>" +
+                                    "<div class='me chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
+                                    const responseButton = $("<button class='responseBtn'>답장</button>");
+                                    responseButton.on('click', function() {
+                                        var contentDiv = $(this).closest('.myChat')[0];
+                                        result = constantMap.get(contentDiv);
+                                        console.log(result);
+                                    });
+                                    content.append(responseButton);
+                                    $("#chat_box").find(".chatting").append(content);
+                                    constantMap.set(content,myid);
+                                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                }
+                                else {
+                                    const content = $("<div class='opsChat'>" + "<div class='op chat'>" + item.content.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeLeft'>" + time +"</div></div>");
+                                    const responseButton = $("<button class='responseBtn'>답장</button>");
+                                    responseButton.on('click', function() {
+                                        var contentDiv = $(this).closet('.opsChat')[0];
+                                        result = constantMap.get(contentDiv);
+                                        console.log(result);
+                                    });
+                                    content.append(responseButton);
+                                    $("#chat_box").find(".chatting").append(content);
+                                    constantMap.set(content.find('.opsChat')[0],myid);
+                                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                }
+                            }
                         }
                     });
-                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
                 });
             }
             function get_chats(data) {
                 $.getJSON("/chat", data, get_all_chats);
+            }
+            //사진으로 답장은 못하지만 버튼기능은 만들어야해!
+            function previewImage(event) {
+                var date = new Date();
+                var time;
+                var am_pm = date.getHours() >= 12 ? "오후" : "오전";
+                var hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+                var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
+                time = am_pm + " " + hours + ":" + minutes;
+                var input = event.target;
+                var reader = new FileReader();
+                reader.onload = function(){
+                    //preview.attr("src", reader.result);
+                    // reader.result에 이미지의 주소값이 들어 있습니다.
+                    var imageUrl = reader.result;
+                    // 이곳에서 imageUrl을 원하는 변수에 저장하거나 활용할 수 있습니다.
+                    $.getJSON("/current_user", function(sender) {
+                        $.getJSON("/getroom", {user1: sender, user2:friend}, function(data) {
+                            var msg = {
+                            sender_name : sender,
+                            receiver_name : friend,
+                            group_id : null,
+                            header_id : null,
+                            content : imageUrl,
+                            sent_at : time,
+                            response_id : null
+                            };
+                            if (data) {
+                                msg.header_id = data.id;
+                                $.ajax({
+                                    url: "/chat",
+                                    type: "post",
+                                    data: JSON.stringify(msg),
+                                    contentType: "application/json",
+                                    success: function (data) {
+                                        const content =$("<div class='myChat'>" +
+                                                        "<div class='me chat'><img src='" + imageUrl + "' style='width:100%; height:100%;'></div>" +
+                                                        "<div class='timeRight'>" + time + "</div>" +
+                                                        "</div>");
+                                        const responseButton = $("<button class='responseBtn'>답장</button>");
+                                        responseButton.on('click', function() {
+                                                var contentDiv = $(this).closest('.myChat')[0];
+                                                result = constantMap.get(contentDiv);
+                                                console.log(result);
+                                        });
+                                        content.append(responseButton);
+                                        $("#chat_box").find(".chatting").append(content);
+                                        constantMap.set(content[0],data.id);
+                                        $('.me.chat img').on('click', function(event) {
+                                            const modal = $('#modal');
+                                            const modalImage = $('#modalImage');
+                                            const clickedElement = event.target;
+                                            modalImage.attr('src', clickedElement.src);
+                                            modal.show();
+                                        });
+                                        $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                        $.ajax({
+                                            url: "/updatelastchat",
+                                            type: "post",
+                                            data: JSON.stringify({"header_id": msg.header_id, "last_chat": "사진을 보냈습니다."}),
+                                            contentType: "application/json",
+                                            success: function (data) {
+                                                console.log(data);
+                                                
+                                            },
+                                            error: function (request, error) {
+                                                console.log(JSON.stringify(error));
+                                            },
+                                        });
+                                        console.log(data);
+                                        console.log(JSON.stringify(msg));
+                                    },
+                                    error: function (request, error) {
+                                        console.log(JSON.stringify(error));
+                                    },
+                                }); 
+                                ws.send(JSON.stringify(msg));
+                            }
+                            else {
+                                $.ajax({
+                                    url: "/makeroom",
+                                        data: JSON.stringify({"from_id": sender, "to_id": friend, "to_group": null, "last_chat": "사진을 보냈습니다."}),
+                                        contentType: "application/json",
+                                        type: "post",
+                                        success: function (data) {
+                                            console.log(data);
+                                            msg.header_id = data;
+                                            $.ajax({
+                                                url: "/chat",
+                                                type: "post",
+                                                data: JSON.stringify(msg),
+                                                contentType: "application/json",
+                                                success: function (data) {
+                                                    $.ajax({
+                                                        url: "/updatelastchat",
+                                                        type: "post",
+                                                        data: JSON.stringify({"header_id": msg.header_id, "last_chat": "사진을 보냈습니다."}),
+                                                        contentType: "application/json",
+                                                        success: function (data) {
+                                                            console.log(data);
+                                                        },
+                                                        error: function (request, error) {
+                                                            console.log(JSON.stringify(error));
+                                                        },
+                                                    });
+                                                    console.log(data);
+                                                    console.log(JSON.stringify(msg));
+                                                },
+                                                error: function (request, error) {
+                                                    console.log(JSON.stringify(error));
+                                                },
+                                            });
+                                        ws.send(JSON.stringify(msg));
+                                        }
+                                })
+                            } 
+                        });
+                    })
+                }   
+                if (input.files && input.files[0]) {
+                    console.log("hello");
+                    reader.readAsDataURL(input.files[0]);
+                }
             }
         </script>
         <style>
@@ -99,11 +550,12 @@
             }
             .chat {
                 white-space: pre-wrap;
-                max-width: 280px;
+                max-width: 230px;
                 padding: 4px 7px;
                 margin-top: 5px;
                 margin-bottom: 10px;
                 border-radius:4px;
+                word-wrap: break-word;  /*여기 줄바꿈 추가함 */
             }
             .timeLeft {
                 float:left;
@@ -234,6 +686,12 @@
                 font-size:large;
                 margin-bottom: 5px;
             }
+            .modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
         </style>
     </head>
     <body>
@@ -251,10 +709,18 @@
             </div>
         </div>
         <button id="btn_send" onclick="sendClick();" class="btn_send">Send</button>
+        <div class="imagebutton">
+            <label for="imageupload">이미지 선택:</label>
+            <input type="file" id="imageupload" accept="image/*">
+        </div>
+        <div class="modal" id="modal">
+            <img src="" id="modalImage">
+        </div>
         <script>
             function sendClick(event) {
                 var date = new Date();
                 var time;
+                var myid;
                 var am_pm = date.getHours() >= 12 ? "오후" : "오전";
                 var hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
                 var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
@@ -268,13 +734,20 @@
                 
                 $.getJSON("/current_user", function(sender) {
                     $.getJSON("/getroom", {user1: sender, user2:friend}, function(data) {
+                        if(result !== null && result !== undefined){
+                            var response=result;
+                        }
+                        else{
+                            var response= null;
+                        }
                         var msg = {
                             sender_name : sender,
                             receiver_name : friend,
                             group_id : null,
                             header_id : null,
                             content : text,
-                            sent_at : time
+                            sent_at : time,
+                            response_id: response 
                         };
 
                         if (data) {
@@ -299,13 +772,111 @@
                                         },
                                     });
                                     console.log(data);
+                                    myid = data.id;
                                     console.log(JSON.stringify(msg));
+                                    if(response != null){
+                                        $.getJSON("/idchatlist?id="+response,function(chat1){
+                                            chat1.forEach(item1=>{ 
+                                                if(item1.sender_id == sender){
+                                                    text1="나에게 답장<br>"
+                                                }
+                                                else{
+                                                    text1=item1.sender_id+"에게 답장<br>"
+                                                }
+                                                if(item1.content.startsWith('data:image/')){
+                                                    text1+="사진";
+                                                    text1+="<hr>";
+                                                    text1+=data.content;
+                                                    text=text1;
+                                                    replacetext= text.replaceAll('\n','<br>');
+                                                    replacetext=replacetext.replaceAll(' ','&nbsp;');    
+                                                    //답장 o + 답장전 사진 + 답장 후 텍스트 + 내가 보내는 문자
+                                                    var newMessage = $("<div class='myChat'>" +"<div class='me Chat'>"+
+                                                    "<div class='response chat'>" + replacetext + "</div></div><div class='timeRight'>" + time + "</div></div>");
+                                                    // 클릭 이벤트 핸들러 추가
+                                                    const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                    responseButton.on('click', function() {
+                                                        var contentDiv = $(this).closest('.myChat')[0];
+                                                        result = constantMap.get(contentDiv);
+                                                        console.log(result);
+                                                    });
+                                                    newMessage.append(responseButton);
+                                                    newMessage.find('.response.chat').on('click', function(event) {
+                                                        var foundKey = findKeyByValue(constantMap, data.response_id);
+                                                        if (foundKey) {
+                                                            var relativeTop = foundKey.offsetTop;
+                                                            $("#chat_box").scrollTop(relativeTop - 100);
+                                                        }
+                                                    });
+                                                    // 채팅 창에 메시지 추가
+                                                    $("#chat_box").find(".chatting").append(newMessage);
+                                                    constantMap.set(newMessage[0],myid);
+                                                    $("#text_box").val("");
+                                                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                                    $("#text_box").focus();   
+                                                }
+                                                else{
+                                                    text1+=item1.content;
+                                                    text1+="<hr>";
+                                                    text1+=data.content;
+                                                    text=text1;
+                                                    replacetext= text.replaceAll('\n','<br>');
+                                                    replacetext=replacetext.replaceAll(' ','&nbsp;');
+                                                    //답장 o + 답장전 텍스트 + 답장 후 텍스트 + 내가 보내는 문자
+                                                    const newMessage = $("<div class='myChat'>" + "<div class='me Chat'>" +
+                                                    "<div class='response chat'>" + replacetext + "</div></div><div class='timeRight'>" + time + "</div></div>");
+                                                    // 클릭 이벤트 핸들러 추가
+                                                    const responseButton = $("<button class='responseBtn'>답장</button>");
+                                                    responseButton.on('click', function() {
+                                                        var contentDiv = $(this).closest('.myChat')[0];
+                                                        result = constantMap.get(contentDiv);
+                                                        console.log(result);
+                                                    });
+                                                    newMessage.append(responseButton);
+                                                    newMessage.find('.response.chat').on('click', function(event) {
+                                                        var foundKey = findKeyByValue(constantMap, data.response_id);
+                                                        if (foundKey) {
+                                                            var relativeTop = foundKey.offsetTop;
+                                                            $("#chat_box").scrollTop(relativeTop - 100);
+                                                        }
+                                                    });
+                                                    // 채팅 창에 메시지 추가
+                                                    $("#chat_box").find(".chatting").append(newMessage);
+                                                    constantMap.set(newMessage[0],myid);
+                                                    $("#text_box").val("");
+                                                    $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                                    $("#text_box").focus();                                            
+                                                }       
+                                            })
+                                        })
+                                        result = null;
+                                    }
+                                    else{
+                                        const content =$("<div class='myChat'>" +
+                                        "<div class='me chat'>" + text.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
+                                        const responseButton = $("<button class='responseBtn'>답장</button>");
+                                        responseButton.on('click', function() {
+                                            var contentDiv = $(this).closest('.myChat')[0]; // 가장 가까운 myChat 요소를 찾음
+                                            console.log('contentDiv:', contentDiv);
+                                            console.log('constantMap keys:', Array.from(constantMap.keys()));
+                                            result = constantMap.get(contentDiv); // constantMap에서 값 검색
+                                            console.log('Result from constantMap:', result);
+                                        });
+                                        content.append(responseButton);
+                                        $("#chat_box").find(".chatting").append(content);
+                                        console.log(myid);
+                                        constantMap.set(content[0],myid);
+                                        console.log('Added to constantMap:', content[0], 'with ID:', data.id);
+                                        $("#text_box").val("");
+                                        $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
+                                        $("#text_box").focus();
+                                    }
                                 },
                                 error: function (request, error) {
                                     console.log(JSON.stringify(error));
                                 },
                             });
-                            
+
                             ws.send(JSON.stringify(msg));
                         }
                         else {
@@ -348,13 +919,6 @@
                                 }
                             })
                         }
-                    
-                        $("#chat_box").find(".chatting").append("<div class='myChat'>" +
-                        "<div class='me chat'>" + text.replace(/(?:\r\n|\r|\n)/g, '<br/>') + "</div><div class='timeRight'>" + time +"</div></div>");
-                    
-                        $("#text_box").val("");
-                        $(".chatting").scrollTop($(".chatting")[0].scrollHeight);
-                        $("#text_box").focus();
                     });
                 })
             }

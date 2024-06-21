@@ -30,12 +30,15 @@ class HeaderSchema(BaseModel):
     class Config:
         from_attributes = True
 
-class ChatSchema(BaseModel):
+class ChatSchemaBase(BaseModel):
     sender_name: Optional[str]
     receiver_name: Optional[str]
     header_id: Optional[int]
     content: Optional[str]
     sent_at: Optional[str]
+    response_id: Optional[int]
 
+class ChatSchema(ChatSchemaBase):
+    id: Optional[int]
     class Config:
-        from_attributes = True
+        orm_mode = True
