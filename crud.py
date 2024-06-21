@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 
 from models import User, Friends, Header, Chat
-from schema import UserSchema, FriendSchema, ChatSchema
+from schema import ChatSchemaBase, UserSchema, FriendSchema, ChatSchema
 
 def db_add_user(db: Session, user: UserSchema):
     db_item = User(name=user.username, password=user.password)
@@ -29,13 +29,17 @@ def db_get_room(db: Session, user1: str, user2: str):
 def db_get_chatlist(db: Session, header_id: int):
     return db.query(Chat).filter(Chat.header_id == header_id).all()
 
-def db_add_chat(db: Session, chat: ChatSchema):
+def db_get_idchatlist(db:Session, id):  #여기 전부 추가
+    return db.query(Chat).filter(Chat.id == id).all()
+
+def db_add_chat(db: Session, chat: ChatSchemaBase):
     db_item = Chat(sender_id=chat.sender_name,
                     receiver_id=chat.receiver_name,
                     header_id=chat.header_id,
                     content=chat.content,
-                    sent_at=chat.sent_at)
+                    sent_at=chat.sent_at,   
+                    response_id=chat.response_id) #여기도 추가   
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
-    return True
+    return db_item

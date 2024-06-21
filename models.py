@@ -34,6 +34,6 @@ class Chat(Base):
     header_id = Column(Integer, ForeignKey("headers.id"))
     content = Column(String)
     sent_at = Column(String)
-
+    response_id = Column(Integer) #데이터베이스에 추가
     sender = relationship("User", foreign_keys=[sender_id])
     receiver = relationship("User", foreign_keys=[receiver_id])

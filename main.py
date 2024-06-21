@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, Response, Request, WebSocket
 from fastapi.responses import FileResponse, RedirectResponse
-
+from typing import List
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -9,9 +9,9 @@ from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
 
 from models import Base, User, Header
-from schema import UserSchema, FriendSchema, HeaderSchema, ChatSchema, LastchatSchema
+from schema import ChatSchemaBase, UserSchema, FriendSchema, HeaderSchema, ChatSchema, LastchatSchema
 from database import SessionLocal ,engine
-from crud import db_add_user, db_add_friend, db_get_friends, db_get_room, db_get_chatlist, db_add_chat
+from crud import db_add_user, db_add_friend, db_get_friends, db_get_idchatlist, db_get_room, db_get_chatlist, db_add_chat
 
 #O
 app = FastAPI()
@@ -63,7 +63,7 @@ def get_user(username: str, db: Session = None):
 # O
 @app.get("/")
 def get_root():
-    return RedirectResponse(url='/friends')
+    return RedirectResponse(url='/login')
 # O, 유저가 이상하면 로그인 페이지로, 유저가 일치하면 friend list화면으로
 @app.get("/friends")
 def get_friends(user=Depends(manager), db: Session = Depends(get_db)):
@@ -176,12 +176,16 @@ def get_chat(header_id: int,db: Session = Depends(get_db)):
     return db_get_chatlist(db, header_id)
 
 @app.post("/chat")
-async def add_chat(chat: ChatSchema, db: Session = Depends(get_db)):
+async def add_chat(chat: ChatSchemaBase, db: Session = Depends(get_db)):
     return db_add_chat(db, chat)
 
 @app.get("/chatlists")
 def get_chatlists(user: str, db: Session = Depends(get_db)):
     return db.query(Header).filter(or_(Header.from_id == user, Header.to_id == user)).all()
+
+@app.get("/idchatlist") #추가
+def get_idchatlist(id: int=None, db: Session = Depends(get_db)):  
+    return db_get_idchatlist(db,id)
 
 # O
 def run():
